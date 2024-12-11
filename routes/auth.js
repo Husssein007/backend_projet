@@ -52,7 +52,7 @@ authRoute.post('/login', loginValidation,validation,async (req, res) => {
         return res.status(404).json({ msg: "rak ghalit fil mdsp mte3ik" });
       }
       // Création du token avec le payload
-      const payload = { id: foundAuth._id };
+      const payload = { id: foundAuth._id,name:foundAuth.name };
       const token = jwt.sign(payload, process.env.privateKey);
       res.status(200).json({ msg: "ur welcome, ya mar7abe", token, foundAuth });
     } catch (err) {

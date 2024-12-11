@@ -1,13 +1,14 @@
+
 // routes/category.js
 const express = require('express');
 const categuorieRoute = express.Router();
-const Category = require('../model/categorySchema');
+const Category = require('../model/category');
 
 // Créer une nouvelle catégorie
 categuorieRoute.post('/', async (req, res) => {
   try {
-    const { name, description } = req.body;
-    const category = new Category({ name, description });
+    const { name, description,imageUrl } = req.body;
+    const category = new Category({ name, description,imageUrl });
     await category.save();
     res.status(201).json(category);
   } catch (err) {

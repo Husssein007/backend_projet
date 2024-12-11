@@ -5,11 +5,9 @@ const port = 4000
 const connectdb= require('./config/connectdb')
 const contactRoute= require('./routes/contactRoutes')
 const authRoute = require('./routes/auth')
-const produitsRoute = require('./routes/productRoutes');
-const categuorieRoute = require('./routes/categoryRoutes');
 const messageRoute = require('./routes/messages')
-const brandRoute = require ('./routes/brandRoutes')
-const brandProduitRoute = require('./routes/brandProduitRoute')
+const router = require('./routes/productRoutes')
+const categuorieRoute = require('./routes/categoryRoutes')
 
 require('dotenv').config()
 
@@ -19,8 +17,9 @@ connectdb()
 app.use(express.json())
 
 //partie categuorie et produits 
-app.use('/api/categories', categuorieRoute);
-app.use('/api/products', produitsRoute);
+app.use('/categories', categuorieRoute);
+
+app.use('/product', router);
 
 //authentification 
 app.use('/contact',contactRoute)
@@ -31,9 +30,6 @@ app.use('/auth',authRoute)
 app.use('/api/message',messageRoute)
 
 
-//partie brand 
-app.use('/api/brands', brandRoute);
-app.use('/', brandProduitRoute);
 
 app.listen(port,err=>{
     err?console.log(err):console.log(`go to the port=>${port}`)

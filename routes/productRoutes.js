@@ -1,82 +1,125 @@
-// routes/product.js
 const express = require('express');
-const produitsRoute = express.Router();
-const Product = require('../model/product');
-const Category = require('../model/categorySchema');
+const Product = require('../model/product'); // Chemin vers votre modèle Product
+const Category = require('../model/category'); // Chemin vers votre modèle Product
 
-// Créer un nouveau produit
-produitsRoute.post('/', async (req, res) => {
+const router = express.Router();
+
+// Créer un produit (Create)
+router.post('/:idcategory', async (req, res) => {
+  try {
+    // Récupérer l'ID de la catégorie depuis les paramètres d'URL
+    const { idcategory } = req.params;
+    
+    // Récupérer les autres informations du produit depuis le corps de la requête
+    const { name, description, price, imageUrl, stockQuantity } = req.body;
+
+    // Vérifier si la catégorie existe dans la base de données
+    const categoryExists = await Category.findById(idcategory);
+    if (!categoryExists) {
+      return res.status(400).json({ message: 'La catégorie n\'existe pas.' });
+    }
+
+    // Créer un nouveau produit avec l'ID de la catégorie valide
+    const product = new Product({
+      name,
+      description,
+      price,
+      imageUrl,
+      category: idcategory,  // Utilisation de l'ID de la catégorie depuis l'URL
+      stockQuantity,
+    });
+
+    // Sauvegarder le produit dans la base de données
+    await product.save();
+
+    // Répondre avec un message de succès
+    res.status(201).json({ message: 'Produit créé avec succès !', product });
+  } catch (error) {
+    // Gérer les erreurs
+    res.status(500).json({ message: 'Erreur lors de la création du produit.', error });
+  }
+});
+
+
+// Lire tous les produits (Read all)
+router.get('/products', async (req, res) => {
+  try {
+    const products = await Product.find();
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la récupération des produits.', error });
+  }
+});
+
+// Lire un produit par ID (Read one)
+router.get('/products/:id', async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({ message: 'Produit non trouvé.' });
+    }
+
+    res.status(200).json(product);
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la récupération du produit.', error });
+  }
+});
+router.get('/productsbyCat/:category',async(req,res)=>{
+  try {
+    const catId = await Category.find({name:req.params.category});
+    console.log(catId);
+    
+    if (!catId) {
+      return res.status(404).json({ message: 'Category non trouvé.' });
+      
+    }
+    const products = await Product.find({category : catId});
+    console.log(products);
+
+    res.status(200).json(products);
+
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la récupération du produit by category.', error });
+    
+  }
+})
+
+// Mettre à jour un produit (Update)
+router.put('/products/:id', async (req, res) => {
   try {
     const { name, description, price, imageUrl, category, stockQuantity } = req.body;
-    const foundCategory = await Category.findById(category);
-    if (!foundCategory) {
-      return res.status(400).json({ message: 'Catégorie invalide' });
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      { name, description, price, imageUrl, category, stockQuantity },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedProduct) {
+      return res.status(404).json({ message: 'Produit non trouvé.' });
     }
-    const product = new Product({ name, description, price, imageUrl, category, stockQuantity });
-    await product.save();
-    res.status(201).json(product);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+
+    res.status(200).json({ message: 'Produit mis à jour avec succès !', updatedProduct });
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la mise à jour du produit.', error });
   }
 });
 
-// Obtenir tous les produits
-produitsRoute.get('/', async (req, res) => {
+// Supprimer un produit (Delete)
+router.delete('/products/:id', async (req, res) => {
   try {
-    const products = await Product.find().populate('category');
-    res.json(products);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
+    const {id}=req.params
+    const deletedProduct = await Product.findByIdAndDelete(id);
 
-// Obtenir les produits d'une catégorie
-produitsRoute.get('/category/:categoryId', async (req, res) => {
-  try {
-    const products = await Product.find({ category: req.params.categoryId }).populate('category');
-    res.json(products);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Obtenir un produit par ID
-produitsRoute.get('/:id', async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id).populate('category');
-    if (!product) {
-      return res.status(404).json({ message: 'Produit non trouvé' });
+    if (!deletedProduct) {
+      return res.status(404).json({ message: 'Produit non trouvé.' });
     }
-    res.json(product);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+
+    res.status(200).json({ message: 'Produit supprimé avec succès !' });
+  } catch (error) {
+    res.status(500).json({ message: 'Erreur lors de la suppression du produit.', error });
   }
 });
 
-// Mettre à jour un produit
-produitsRoute.put('/:id', async (req, res) => {
-  try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!product) {
-      return res.status(404).json({ message: 'Produit non trouvé' });
-    }
-    res.json(product);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Supprimer un produit
-produitsRoute.delete('/:id', async (req, res) => {
-  try {
-    const product = await Product.findByIdAndDelete(req.params.id);
-    if (!product) {
-      return res.status(404).json({ message: 'Produit non trouvé' });
-    }
-    res.status(204).send();
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-module.exports = produitsRoute;
+module.exports = router;

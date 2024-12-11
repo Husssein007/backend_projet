@@ -1,4 +1,3 @@
-// models/Product.js
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
@@ -13,6 +12,7 @@ const productSchema = new mongoose.Schema({
   price: {
     type: Number,
     required: true,
+    min: 0, // Assurer que le prix est positif
   },
   imageUrl: {
     type: String,
@@ -20,7 +20,7 @@ const productSchema = new mongoose.Schema({
   },
   category: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Category', // Référence à la catégorie du produit
+    ref: 'Category',
     required: true,
   },
   stockQuantity: {
