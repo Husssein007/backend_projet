@@ -1,7 +1,6 @@
 const express = require('express');
 const Product = require('../model/product'); // Chemin vers votre modèle Product
 const Category = require('../model/category'); // Chemin vers votre modèle Product
-
 const router = express.Router();
 
 // Créer un produit (Create)
@@ -9,10 +8,8 @@ router.post('/:idcategory', async (req, res) => {
   try {
     // Récupérer l'ID de la catégorie depuis les paramètres d'URL
     const { idcategory } = req.params;
-    
     // Récupérer les autres informations du produit depuis le corps de la requête
     const { name, description, price, imageUrl, stockQuantity } = req.body;
-
     // Vérifier si la catégorie existe dans la base de données
     const categoryExists = await Category.findById(idcategory);
     if (!categoryExists) {
@@ -29,9 +26,34 @@ router.post('/:idcategory', async (req, res) => {
       stockQuantity,
     });
 
+    // // router.get('/productsbyCat/:category', async (req, res) => {
+    // //   try {
+    // //     const catId = req.params.category;
+    // //     console.log("Category ID received by API:", catId); // Vérifiez que l'ID est reçu correctement
+    
+    // //     // Récupérer la catégorie avec l'ID
+    // //     const category = await Category.findById(catId);
+    // //     if (!category) {
+    // //       return res.status(404).json({ message: 'Category not found' });
+    // //     }
+    
+    // //     // Récupérer les produits associés à la catégorie
+    // //     const products = await Product.find({ category: catId });
+    // //     console.log("Products found for category:", products); // Vérifiez les produits trouvés
+    
+    // //     res.status(200).json(products);
+    // //   } catch (error) {
+    // //     console.error("Error fetching products:", error);
+    // //     res.status(500).json({ message: 'Error fetching products' });
+    // //   }
+    // // });
+    
+    
+    
+
+
     // Sauvegarder le produit dans la base de données
     await product.save();
-
     // Répondre avec un message de succès
     res.status(201).json({ message: 'Produit créé avec succès !', product });
   } catch (error) {
@@ -43,8 +65,11 @@ router.post('/:idcategory', async (req, res) => {
 
 // Lire tous les produits (Read all)
 router.get('/products', async (req, res) => {
+  const products = await Product.find().populate('category', 'name description');
   try {
+    
     const products = await Product.find();
+    
     res.status(200).json(products);
   } catch (error) {
     res.status(500).json({ message: 'Erreur lors de la récupération des produits.', error });
@@ -54,36 +79,38 @@ router.get('/products', async (req, res) => {
 // Lire un produit par ID (Read one)
 router.get('/products/:id', async (req, res) => {
   try {
+ 
     const product = await Product.findById(req.params.id);
-
     if (!product) {
       return res.status(404).json({ message: 'Produit non trouvé.' });
     }
-
     res.status(200).json(product);
   } catch (error) {
     res.status(500).json({ message: 'Erreur lors de la récupération du produit.', error });
   }
 });
-router.get('/productsbyCat/:category',async(req,res)=>{
+
+router.get('/productsbyCat/:category', async (req, res) => {
   try {
-    const catId = await Category.find({name:req.params.category});
-    console.log(catId);
-    
-    if (!catId) {
-      return res.status(404).json({ message: 'Category non trouvé.' });
-      
+    const categoryId = req.params.category;
+    console.log("Category ID received by API:", categoryId); // Vérifiez que l'ID de catégorie est correct
+
+    // Trouver les produits associés à cette catégorie
+    const products = await Product.find({ category: categoryId });
+
+    console.log("Products found for category:", products); // Vérifiez si des produits sont trouvés
+
+    if (products.length === 0) {
+      return res.status(404).json({ message: 'No products found for this category' });
     }
-    const products = await Product.find({category : catId});
-    console.log(products);
 
     res.status(200).json(products);
-
   } catch (error) {
-    res.status(500).json({ message: 'Erreur lors de la récupération du produit by category.', error });
-    
+    console.error("Error fetching products:", error);
+    res.status(500).json({ message: 'Error fetching products' });
   }
-})
+});
+
 
 // Mettre à jour un produit (Update)
 router.put('/products/:id', async (req, res) => {
